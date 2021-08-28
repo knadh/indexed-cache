@@ -1,0 +1,29 @@
+{
+  "name": "@knadh/indexed-cache",
+  "version": "0.1.0",
+  "description": "Sideload static assets on pages and cache them in IndexedDB ensuring longer-term storage.",
+  "main": "indexed-cache.js",
+  "files": [
+    "indexed-cache.js"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/knadh/indexed-cache.git"
+  },
+  "keywords": [
+    "static files",
+    "caching"
+  ],
+  "author": "Kailash Nadh",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/knadh/indexed-cache/issues"
+  },
+  "homepage": "https://github.com/knadh/indexed-cache",
+  "publishConfig": {
+    "access": "public"
+  }
+}
