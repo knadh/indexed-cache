@@ -98,9 +98,7 @@ new IndexedCache({
 
     // Default expiry for an object in minutes (default 3 months).
     // Set to null for no expiry.
-    expiry: 131400,
-
-    ...options
+    expiry: 131400
 }).load();
 ```
 
