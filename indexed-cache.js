@@ -207,6 +207,11 @@ class IndexedCache {
 	_fetchAsset = (obj) => {
 		return new Promise((resolve, reject) => {
 			fetch(obj.src).then((r) => {
+				if (!r.ok) {
+					reject(`error fetching asset: ${r.status}`);
+					return;
+				}
+
 				r.blob().then((b) => {
 					const data = {
 						key: obj.key,
@@ -218,7 +223,7 @@ class IndexedCache {
 
 					req.onsuccess = (e) => resolve(data);
 
-					req.onerror = (e) => reject(e.target.error); 
+					req.onerror = (e) => reject(e.target.error);
 				});
 			}).catch((e) => {
 				reject(e.target.error);
