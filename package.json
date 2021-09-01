@@ -1,6 +1,6 @@
 {
   "name": "@knadh/indexed-cache",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Sideload static assets on pages and cache them in IndexedDB ensuring longer-term storage.",
   "main": "src/index.js",
   "files": [
