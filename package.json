@@ -31,8 +31,8 @@
   "publishConfig": {
     "access": "public"
   },
-  "browser": "dist/index-cache.min.js",
-  "esm": "dist/index-cache.esm.js",
+  "browser": "dist/indexed-cache.min.js",
+  "esm": "dist/indexed-cache.esm.js",
   "devDependencies": {
     "@babel/core": "^7.14.6",
     "@babel/preset-env": "^7.14.7",
