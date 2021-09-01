@@ -237,8 +237,10 @@ class IndexedCache {
 			case "SCRIPT":
 			case "IMG":
 				obj.el.setAttribute("src", obj.src);
+				break
 			case "LINK":
 				obj.el.setAttribute("href", obj.src);
+				break
 		}
 	}
 
@@ -249,8 +251,10 @@ class IndexedCache {
 			case "SCRIPT":
 			case "IMG":
 				obj.el.src = b;
+				break
 			case "LINK":
 				obj.el.href = b;
+				break
 		}
 	}
 
