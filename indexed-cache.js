@@ -28,7 +28,7 @@ class IndexedCache {
 	}
 
 	// Initialize the DB and then scan and setup DOM elements to cache.
-	load = async () => {
+	async load() {
 		this._initDB(this.opt.dbName, this.opt.storeName).then((db) => {
 			this.db = db;
 
@@ -54,7 +54,7 @@ class IndexedCache {
 	}
 
 	// Initialize the indexedDB database and create the store.
-	_initDB = async (dbName, storeName) => {
+	async _initDB(dbName, storeName) {
 		return new Promise((resolve, reject) => {
 			if (!window.indexedDB) {
 				reject("indexedDB is not available")
@@ -83,7 +83,7 @@ class IndexedCache {
 	// a) if indexedDB is not available, fallback to loading the assets natively.
 	// b) if DB is available but the object is not cached, fetch(), cache in B, and apply the blob.
 	// c) if DB is available and the object is cached, apply the cached blob.
-	_setupElements = async () => {
+	async _setupElements() {
 		const objs = [];
 
 		// Get all tags of a particular tag on the page that has the data-src attrib.
@@ -151,7 +151,7 @@ class IndexedCache {
 		return objs;
 	}
 
-	_loadObject = async (obj) => {
+	async _loadObject(obj) {
 		return new Promise((resolve, reject) => {
 			// Get the stored blob.
 			this._getBlob(obj).then((data) => {
@@ -174,7 +174,7 @@ class IndexedCache {
 
 	// Get the blob of an asset stored in the DB. If there is no entry or it has expired
 	// (hash changed or date expired), fetch the asset over HTTP, cache it, and load it.
-	_getBlob = async (obj) => {
+	async _getBlob(obj) {
 		return new Promise((resolve, reject) => {
 			const req = this._store().get(obj.key);
 			req.onsuccess = (e) => {
@@ -204,7 +204,7 @@ class IndexedCache {
 	}
 
 	// Fetch an asset and cache it.
-	_fetchAsset = (obj) => {
+	async _fetchAsset(obj) {
 		return new Promise((resolve, reject) => {
 			fetch(obj.src).then((r) => {
 				if (!r.ok) {
