@@ -90,7 +90,7 @@ new IndexedCache({
     dbName: "indexed-cache",
     storeName: "objects",
 
-    // If this is enabled, all objects in the cash with keys not
+    // If this is enabled, all objects in the cache with keys not
     // found on elements on the page (data-key) will be deleted.
     // This can be problematic in scenarios where there are multiple
     // pages on the same domain that have different assets, some on
