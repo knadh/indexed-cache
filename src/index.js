@@ -184,7 +184,7 @@ export default class IndexedCache {
         resolve({ obj, data })
       }).catch((e) => {
         // If there is no cause, the object is not cached or has expired.
-        if (e.cause !== null) {
+        if (e.toString() === '') {
           console.log('error getting cache blob:', e)
         }
 
@@ -209,14 +209,14 @@ export default class IndexedCache {
 
         // Reject if there is no stored data, or if the hash has changed.
         if (!data || (obj.hash && (data.hash !== obj.hash))) {
-          reject(new Error('', { cause: null }))
+          reject(new Error(''))
           return
         }
 
         // Reject and delete if the object has expired.
         if (data.expiry && new Date() > new Date(data.expiry)) {
           this.deleteKey(data.key)
-          reject(new Error('', { cause: null }))
+          reject(new Error(''))
           return
         }
 
