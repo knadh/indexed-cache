@@ -29,20 +29,28 @@ export default class IndexedCache {
 
   // Initialize the DB and then scan and setup DOM elements to cache.
   async load () {
-    this._initDB(this.opt.dbName, this.opt.storeName).then((db) => {
+    await this._initDB(this.opt.dbName, this.opt.storeName).then((db) => {
       this.db = db
-
-      const objs = this._setupElements()
-
-      // If pruning is enabled, delete all cached elements that are no longer
-      // referenced on the page.
-      if (this.opt.prune) {
-        this._prune(objs)
-      }
     }).catch((e) => {
       console.log('error initializing cache DB. failing over.', e)
-      this._setupElements()
     })
+
+    // This will setup the elements on the page irrespective of whether
+    // the DB is available or not.
+    let objs = []
+    await this._setupElements().then((_objs) => {
+      objs = _objs
+    })
+
+    if (!this.db) {
+      return
+    }
+
+    // If pruning is enabled, delete all cached elements that are no longer
+    // referenced on the page.
+    if (this.opt.prune) {
+      this._prune(objs)
+    }
   }
 
   deleteKey (key) {
@@ -83,6 +91,7 @@ export default class IndexedCache {
   // a) if indexedDB is not available, fallback to loading the assets natively.
   // b) if DB is available but the object is not cached, fetch(), cache in B, and apply the blob.
   // c) if DB is available and the object is cached, apply the cached blob.
+
   async _setupElements () {
     const objs = []
 
@@ -255,9 +264,9 @@ export default class IndexedCache {
   }
 
   // Delete all objects in cache that are not in the given list of objects.
-  _prune (obj) {
-    // Prepare a { key: true } lookup map of all names found on the page.
-    const keys = obj.reduce((obj, v) => { obj[v.key] = true; return obj }, {})
+  _prune (objs) {
+    // Prepare a { key: true } lookup map of all keys found on the page.
+    const keys = objs.reduce((obj, v) => { obj[v.key] = true; return obj }, {})
 
     const req = this._store().getAllKeys()
     req.onsuccess = (e) => {
