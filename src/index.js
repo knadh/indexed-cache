@@ -233,14 +233,13 @@ export default class IndexedCache {
             expiry: obj.expiry,
             blob: b
           }
+
           const req = this._store().put(data)
-
           req.onsuccess = (e) => resolve(data)
-
           req.onerror = (e) => reject(e.target.error)
         })
       }).catch((e) => {
-        reject(e.target.error)
+        reject(new Error(e.toString()))
       })
     })
   }
