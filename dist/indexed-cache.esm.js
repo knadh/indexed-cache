@@ -29,11 +29,13 @@ class IndexedCache {
 
   // Initialize the DB and then scan and setup DOM elements to cache.
   async load () {
-    await this._initDB(this.opt.dbName, this.opt.storeName).then((db) => {
-      this.db = db;
-    }).catch((e) => {
-      console.log('error initializing cache DB. failing over.', e);
-    });
+    if (!this.db) {
+      await this._initDB(this.opt.dbName, this.opt.storeName).then((db) => {
+        this.db = db;
+      }).catch((e) => {
+        console.log('error initializing cache DB. failing over.', e);
+      });
+    }
 
     // This will setup the elements on the page irrespective of whether
     // the DB is available or not.
@@ -42,7 +44,7 @@ class IndexedCache {
       objs = _objs;
     });
 
-    if (!this.db) {
+    if (!this.db || objs.length === 0) {
       return
     }
 
@@ -97,7 +99,7 @@ class IndexedCache {
 
     // Get all tags of a particular tag on the page that has the data-src attrib.
     this.opt.tags.forEach((tag) => {
-      document.querySelectorAll(`${tag}[data-src]`).forEach((el) => {
+      document.querySelectorAll(`${tag}[data-src]:not([data-indexed])`).forEach((el) => {
         const obj = {
           el: el,
           key: el.dataset.key || el.dataset.src,
@@ -122,6 +124,10 @@ class IndexedCache {
         }
       });
     });
+
+    if (objs.length === 0) {
+      return objs
+    }
 
     const promises = [];
     objs.forEach((obj) => {
@@ -165,7 +171,8 @@ class IndexedCache {
       this._getBlob(obj).then((data) => {
         resolve({ obj, data });
       }).catch((e) => {
-        if (e) {
+        // If there is no cause, the object is not cached or has expired.
+        if (e.cause !== null) {
           console.log('error getting cache blob:', e);
         }
 
@@ -190,14 +197,14 @@ class IndexedCache {
 
         // Reject if there is no stored data, or if the hash has changed.
         if (!data || (obj.hash && (data.hash !== obj.hash))) {
-          reject(new Error(null));
+          reject(new Error('', { cause: null }));
           return
         }
 
         // Reject and delete if the object has expired.
         if (data.expiry && new Date() > new Date(data.expiry)) {
           this.deleteKey(data.key);
-          reject(new Error(null));
+          reject(new Error('', { cause: null }));
           return
         }
 
@@ -248,6 +255,7 @@ class IndexedCache {
       case 'LINK':
         obj.el.setAttribute('href', obj.src);
     }
+    obj.el.dataset.indexed = true;
   }
 
   // Apply the Blob() to the given element.
@@ -261,6 +269,7 @@ class IndexedCache {
       case 'LINK':
         obj.el.href = b;
     }
+    obj.el.dataset.indexed = true;
   }
 
   // Delete all objects in cache that are not in the given list of objects.
