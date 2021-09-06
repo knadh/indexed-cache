@@ -117,7 +117,7 @@ export default class IndexedCache {
     const promises = []
     objs.forEach((obj) => {
       if (obj.isAsync) {
-        // Load and apply async objects asychronously.
+        // Load and apply async objects asynchronously.
         this._loadObject(obj).then((result) => {
           this._applyBlob(obj, result.data.blob)
         }).catch((e) => {
