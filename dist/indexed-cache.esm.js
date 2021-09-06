@@ -12,7 +12,7 @@ class IndexedCache {
       storeName: 'objects',
 
       // If this is enabled, all objects in the cash with keys not
-      // found on elements on the page (data-key) will be deleted.
+      // found on elements on the page (data-key) will be deleted by load().
       // This can be problematic in scenarios where there are multiple
       // pages on the same domain that have different assets, some on
       // certain pages and some on other.
@@ -27,16 +27,21 @@ class IndexedCache {
     this.db = null;
   }
 
-  // Initialize the DB and then scan and setup DOM elements to cache.
-  async load () {
-    if (!this.db) {
-      await this._initDB(this.opt.dbName, this.opt.storeName).then((db) => {
-        this.db = db;
-      }).catch((e) => {
-        console.log('error initializing cache DB. failing over.', e);
-      });
+  // This should be called before calling any other methods.
+  async init () {
+    if (this.db) {
+      return
     }
 
+    await this._initDB(this.opt.dbName, this.opt.storeName).then((db) => {
+      this.db = db;
+    }).catch((e) => {
+      console.log('error initializing cache DB. failing over.', e);
+    });
+  }
+
+  // Initialize the DB and then scan and setup DOM elements to cache.
+  async load () {
     // This will setup the elements on the page irrespective of whether
     // the DB is available or not.
     let objs = [];
@@ -51,12 +56,19 @@ class IndexedCache {
     // If pruning is enabled, delete all cached elements that are no longer
     // referenced on the page.
     if (this.opt.prune) {
-      this._prune(objs);
+      // Pass the list of keys found on the page.
+      const keys = objs.reduce((obj, v) => { obj.push(v.key); return obj }, []);
+      this._prune(keys);
     }
   }
 
   deleteKey (key) {
     this._store().delete(key);
+  }
+
+  // Prune all objects in the DB that are not in the given list of keys.
+  prune (keys) {
+    this._prune(keys);
   }
 
   clear () {
@@ -233,14 +245,13 @@ class IndexedCache {
             expiry: obj.expiry,
             blob: b
           };
+
           const req = this._store().put(data);
-
           req.onsuccess = (e) => resolve(data);
-
           req.onerror = (e) => reject(e.target.error);
         });
       }).catch((e) => {
-        reject(e.target.error);
+        reject(new Error(e.toString()));
       });
     })
   }
@@ -273,14 +284,14 @@ class IndexedCache {
   }
 
   // Delete all objects in cache that are not in the given list of objects.
-  _prune (objs) {
+  _prune (keys) {
     // Prepare a { key: true } lookup map of all keys found on the page.
-    const keys = objs.reduce((obj, v) => { obj[v.key] = true; return obj }, {});
+    const keyMap = keys.reduce((obj, v) => { obj[v] = true; return obj }, {});
 
     const req = this._store().getAllKeys();
     req.onsuccess = (e) => {
       e.target.result.forEach((key) => {
-        if (!(key in keys)) {
+        if (!(key in keyMap)) {
           this.deleteKey(key);
         }
       });
@@ -291,7 +302,5 @@ class IndexedCache {
     return this.db.transaction(this.opt.storeName, 'readwrite').objectStore(this.opt.storeName)
   }
 }
-
-// export { IndexedCache as default };
 
 export { IndexedCache as default };
