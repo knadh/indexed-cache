@@ -51,12 +51,19 @@ export default class IndexedCache {
     // If pruning is enabled, delete all cached elements that are no longer
     // referenced on the page.
     if (this.opt.prune) {
-      this._prune(objs)
+      // Prepare a { key: true } lookup map of all keys found on the page.
+      const keys = objs.reduce((obj, v) => { obj[v.key] = true; return obj }, {})
+      this._prune(keys)
     }
   }
 
   deleteKey (key) {
     this._store().delete(key)
+  }
+
+  // Prune all objects in the DB that are not in the given list of keys.
+  prune (keys) {
+    this._prune(keys)
   }
 
   clear () {
@@ -272,10 +279,7 @@ export default class IndexedCache {
   }
 
   // Delete all objects in cache that are not in the given list of objects.
-  _prune (objs) {
-    // Prepare a { key: true } lookup map of all keys found on the page.
-    const keys = objs.reduce((obj, v) => { obj[v.key] = true; return obj }, {})
-
+  _prune (keys) {
     const req = this._store().getAllKeys()
     req.onsuccess = (e) => {
       e.target.result.forEach((key) => {
