@@ -74,7 +74,7 @@ To cache and sideload static assets:
         Use the unpkg CDN or download and host the script locally (dist/indexed-cache.min.js).
     !-->
     <script src="https://unpkg.com/@knadh/indexed-cache@0.3.0/dist/indexed-cache.min.js"></script>
-    <script>new IndexedCache().load();</script>
+    <script>const ic = new IndexedCache(); await ic.init(); ic.load();</script>
 </body>
 </html>
 ```
@@ -103,5 +103,6 @@ new IndexedCache({
 }).load();
 ```
 
+To manually prune all objects in the database except for a given list of keys, after `await init()`, call `.prune([list of keys])`.
 
 Licensed under the MIT license.
