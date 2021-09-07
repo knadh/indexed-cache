@@ -103,6 +103,7 @@ new IndexedCache({
 }).load();
 ```
 
-To manually prune all objects in the database except for a given list of keys, after `await init()`, call `.prune([list of keys])`.
+- `load()` can be called with a DOM Node or NodeList. When none are given, it scans the entire DOM.
+- To manually prune all objects in the database except for a given list of keys, after `await init()`, call `.prune([list of keys])`.
 
 Licensed under the MIT license.

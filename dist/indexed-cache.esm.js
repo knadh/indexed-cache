@@ -41,11 +41,11 @@ class IndexedCache {
   }
 
   // Initialize the DB and then scan and setup DOM elements to cache.
-  async load () {
+  async load (elements) {
     // This will setup the elements on the page irrespective of whether
     // the DB is available or not.
     let objs = [];
-    await this._setupElements().then((_objs) => {
+    await this._setupElements(elements).then((_objs) => {
       objs = _objs;
     });
 
@@ -103,43 +103,51 @@ class IndexedCache {
 
   // Scan all matching elements and either:
   // a) if indexedDB is not available, fallback to loading the assets natively.
-  // b) if DB is available but the object is not cached, fetch(), cache in B, and apply the blob.
+  // b) if DB is available but the object is not cached, fetch(), cache in the DB, and apply the blob.
   // c) if DB is available and the object is cached, apply the cached blob.
-
-  async _setupElements () {
+  // elements should either be null or be a NodeList.
+  async _setupElements (elements) {
     const objs = [];
 
-    // Get all tags of a particular tag on the page that has the data-src attrib.
-    this.opt.tags.forEach((tag) => {
-      document.querySelectorAll(`${tag}[data-src]:not([data-indexed])`).forEach((el) => {
-        const obj = {
-          el: el,
-          key: el.dataset.key || el.dataset.src,
-          src: el.dataset.src,
-          hash: el.dataset.hash || el.dataset.src,
-          isAsync: el.tagName !== 'SCRIPT' || el.hasAttribute('async') || el.hasAttribute('defer'),
-          expiry: null
-        };
-
-        // If there is a global expiry or an expiry on the object, compute that.
-        const exp = el.dataset.expiry || this.opt.expiry;
-        if (exp) {
-          obj.expiry = new Date(new Date().getTime() + (parseInt(exp) * 60000));
-        }
-
-        // If for any reason the store is not initialized, fall back to
-        // the native asset loading mechanism.
-        if (this.db) {
-          objs.push(obj);
-        } else {
-          this._applyOriginal(obj);
-        }
-      });
-    });
-
-    if (objs.length === 0) {
-      return objs
+    // If there are no elements, scan the entire DOM for groups of each tag type.
+    if (elements instanceof NodeList) {
+      elements = Array.from(elements);
+    } else if (elements instanceof Node) {
+      elements = [elements];
+    } else {
+      const sel = this.opt.tags.map((t) => `${t}[data-src]:not([data-indexed])`).join(',');
+      elements = document.querySelectorAll(sel);
     }
+
+    // Get all tags of a particular tag on the page that has the data-src attrib.
+    // document.querySelectorAll(`${tag}[data-src]:not([data-indexed])`).forEach((el) => {
+    elements.forEach((el) => {
+      if ('indexed' in el.dataset) {
+        return
+      }
+      const obj = {
+        el: el,
+        key: el.dataset.key || el.dataset.src,
+        src: el.dataset.src,
+        hash: el.dataset.hash || el.dataset.src,
+        isAsync: el.tagName !== 'SCRIPT' || el.hasAttribute('async') || el.hasAttribute('defer'),
+        expiry: null
+      };
+
+      // If there is a global expiry or an expiry on the object, compute that.
+      const exp = el.dataset.expiry || this.opt.expiry;
+      if (exp) {
+        obj.expiry = new Date(new Date().getTime() + (parseInt(exp) * 60000));
+      }
+
+      // If for any reason the store is not initialized, fall back to
+      // the native asset loading mechanism.
+      if (this.db) {
+        objs.push(obj);
+      } else {
+        this._applyOriginal(obj);
+      }
+    });
 
     const promises = [];
     objs.forEach((obj) => {
@@ -155,6 +163,10 @@ class IndexedCache {
         promises.push(this._loadObject(obj));
       }
     });
+
+    if (promises.length === 0) {
+      return objs
+    }
 
     // Once the assets have been fetched, apply them synchronously. Since
     // the time take to execute a script is not guaranteed, use the onload() event
