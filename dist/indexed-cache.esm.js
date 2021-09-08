@@ -57,7 +57,7 @@ class IndexedCache {
     // referenced on the page.
     if (this.opt.prune) {
       // Pass the list of keys found on the page.
-      const keys = objs.reduce((obj, v) => { obj.push(v.key); return obj }, []);
+      const keys = objs.map(obj => obj.key);
       this._prune(keys);
     }
   }
@@ -215,29 +215,33 @@ class IndexedCache {
   // (hash changed or date expired), fetch the asset over HTTP, cache it, and load it.
   async _getBlob (obj) {
     return new Promise((resolve, reject) => {
-      const req = this._store().get(obj.key);
-      req.onsuccess = (e) => {
-        const data = e.target.result;
+      try {
+        const req = this._store().get(obj.key);
+        req.onsuccess = (e) => {
+          const data = e.target.result;
 
-        // Reject if there is no stored data, or if the hash has changed.
-        if (!data || (obj.hash && (data.hash !== obj.hash))) {
-          reject(new Error(''));
-          return
-        }
+          // Reject if there is no stored data, or if the hash has changed.
+          if (!data || (obj.hash && (data.hash !== obj.hash))) {
+            reject(new Error(''));
+            return
+          }
 
-        // Reject and delete if the object has expired.
-        if (data.expiry && new Date() > new Date(data.expiry)) {
-          this.deleteKey(data.key);
-          reject(new Error(''));
-          return
-        }
+          // Reject and delete if the object has expired.
+          if (data.expiry && new Date() > new Date(data.expiry)) {
+            this.deleteKey(data.key);
+            reject(new Error(''));
+            return
+          }
 
-        resolve(data);
-      };
+          resolve(data);
+        };
 
-      req.onerror = (e) => {
+        req.onerror = (e) => {
+          reject(e.target.error);
+        };
+      } catch (e) {
         reject(e.target.error);
-      };
+      }
     })
   }
 
@@ -258,9 +262,13 @@ class IndexedCache {
             blob: b
           };
 
-          const req = this._store().put(data);
-          req.onsuccess = (e) => resolve(data);
-          req.onerror = (e) => reject(e.target.error);
+          try {
+            const req = this._store().put(data);
+            req.onsuccess = (e) => resolve(data);
+            req.onerror = (e) => reject(e.target.error);
+          } catch (e) {
+            reject(e.target.error);
+          }
         });
       }).catch((e) => {
         reject(new Error(e.toString()));

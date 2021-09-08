@@ -73,7 +73,7 @@ To cache and sideload static assets:
         Always include and invoke indexed-cache at the end, right before </body>.
         Use the unpkg CDN or download and host the script locally (dist/indexed-cache.min.js).
     !-->
-    <script src="https://unpkg.com/@knadh/indexed-cache@0.3.2/dist/indexed-cache.min.js"></script>
+    <script src="https://unpkg.com/@knadh/indexed-cache@0.3.3/dist/indexed-cache.min.js"></script>
     <script>const ic = new IndexedCache(); await ic.init(); ic.load();</script>
 </body>
 </html>
