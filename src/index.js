@@ -215,27 +215,31 @@ export default class IndexedCache {
   // (hash changed or date expired), fetch the asset over HTTP, cache it, and load it.
   async _getBlob (obj) {
     return new Promise((resolve, reject) => {
-      const req = this._store().get(obj.key)
-      req.onsuccess = (e) => {
-        const data = e.target.result
+      try {
+        const req = this._store().get(obj.key)
+        req.onsuccess = (e) => {
+          const data = e.target.result
 
-        // Reject if there is no stored data, or if the hash has changed.
-        if (!data || (obj.hash && (data.hash !== obj.hash))) {
-          reject(new Error(''))
-          return
+          // Reject if there is no stored data, or if the hash has changed.
+          if (!data || (obj.hash && (data.hash !== obj.hash))) {
+            reject(new Error(''))
+            return
+          }
+
+          // Reject and delete if the object has expired.
+          if (data.expiry && new Date() > new Date(data.expiry)) {
+            this.deleteKey(data.key)
+            reject(new Error(''))
+            return
+          }
+
+          resolve(data)
         }
 
-        // Reject and delete if the object has expired.
-        if (data.expiry && new Date() > new Date(data.expiry)) {
-          this.deleteKey(data.key)
-          reject(new Error(''))
-          return
+        req.onerror = (e) => {
+          reject(e.target.error)
         }
-
-        resolve(data)
-      }
-
-      req.onerror = (e) => {
+      } catch (e) {
         reject(e.target.error)
       }
     })
@@ -258,9 +262,13 @@ export default class IndexedCache {
             blob: b
           }
 
-          const req = this._store().put(data)
-          req.onsuccess = (e) => resolve(data)
-          req.onerror = (e) => reject(e.target.error)
+          try {
+            const req = this._store().put(data)
+            req.onsuccess = (e) => resolve(data)
+            req.onerror = (e) => reject(e.target.error)
+          } catch (e) {
+            reject(e.target.error)
+          }
         })
       }).catch((e) => {
         reject(new Error(e.toString()))
