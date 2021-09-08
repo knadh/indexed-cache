@@ -57,7 +57,7 @@ export default class IndexedCache {
     // referenced on the page.
     if (this.opt.prune) {
       // Pass the list of keys found on the page.
-      const keys = objs.reduce((obj, v) => { obj.push(v.key); return obj }, [])
+      const keys = objs.map(obj => obj.key)
       this._prune(keys)
     }
   }
