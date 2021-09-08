@@ -160,7 +160,10 @@ export default class IndexedCache {
         })
       } else {
         // Load non-async objects asynchronously (but apply synchronously).
-        promises.push(this._loadObject(obj))
+        // If error propagate it.
+        promises.push(this._loadObject(obj).catch(error => {
+          return { obj, error }
+        }))
       }
     })
 
@@ -177,16 +180,25 @@ export default class IndexedCache {
           return
         }
 
-        r.obj.el.onload = () => {
-          this._applyBlob(results[n + 1].obj, results[n + 1].data.blob)
-        }
+        r.obj.el.onload = () => this._applyObject(results[n + 1])
+
+        r.obj.el.onerror = (e) => this._applyObject(results[n + 1])
       })
 
       // Start the chain by loading the first element.
-      this._applyBlob(results[0].obj, results[0].data.blob)
+      this._applyObject(results[0])
     })
 
     return objs
+  }
+
+  // Apply non-async objects with error handling.
+  async _applyObject (result) {
+    if (result.error) {
+      this._applyOriginal(result.obj)
+    } else {
+      this._applyBlob(result.obj, result.data.blob)
+    }
   }
 
   async _loadObject (obj) {
