@@ -145,7 +145,7 @@ class IndexedCache {
       if (this.db) {
         objs.push(obj);
       } else {
-        this._applyOriginal(obj);
+        this._applyElement(obj);
       }
     });
 
@@ -153,14 +153,14 @@ class IndexedCache {
     objs.forEach((obj) => {
       if (obj.isAsync) {
         // Load and apply async objects asynchronously.
-        this._loadObject(obj).then((result) => {
-          this._applyBlob(obj, result.data.blob);
+        this._getObject(obj).then((result) => {
+          this._applyElement(obj, result.data.blob);
         }).catch((e) => {
-          this._applyOriginal(obj);
+          this._applyElement(obj);
         });
       } else {
         // Load non-async objects asynchronously (but apply synchronously).
-        promises.push(this._loadObject(obj));
+        promises.push(this._getObject(obj));
       }
     });
 
@@ -171,41 +171,57 @@ class IndexedCache {
     // Once the assets have been fetched, apply them synchronously. Since
     // the time take to execute a script is not guaranteed, use the onload() event
     // of each element to load the next element.
-    await Promise.all(promises).then((results) => {
-      results.forEach((r, n) => {
+    await Promise.allSettled(promises).then((results) => {
+      results.forEach((cur, n) => {
+        if (cur.status === 'rejected') {
+          this._applyElement(objs[n]);
+          return
+        }
+
         if (n >= results.length - 1) {
           return
         }
 
-        r.obj.el.onload = () => {
-          this._applyBlob(results[n + 1].obj, results[n + 1].data.blob);
+        cur.value.obj.el.onload = cur.value.obj.el.onerror = () => {
+          this._applyElement(results[n + 1].value.obj, results[n + 1].value.data.blob);
         };
       });
 
       // Start the chain by loading the first element.
-      this._applyBlob(results[0].obj, results[0].data.blob);
+      this._applyElement(results[0].value.obj, results[0].value.data.blob);
     });
 
     return objs
   }
 
-  async _loadObject (obj) {
+  // Get the object from the DB and if that fails, fetch() it over HTTP
+  // This function should not reject a promise and in the case of failure,
+  // will return a dummy data object as if it were fetched from the DB.
+  async _getObject (obj) {
     return new Promise((resolve, reject) => {
       // Get the stored blob.
-      this._getBlob(obj).then((data) => {
+      this._getDBblob(obj).then((data) => {
         resolve({ obj, data });
       }).catch((e) => {
         // If there is no cause, the object is not cached or has expired.
-        if (e.toString() === '') {
+        if (e.toString() !== 'Error') {
           console.log('error getting cache blob:', e);
         }
 
         // Couldn't get the stored blog. Attempt to fetch() and cache.
-        this._fetchAsset(obj).then((data) => {
+        this._fetchObject(obj).then((data) => {
           resolve({ obj, data });
         }).catch((e) => {
           // Everything failed. Failover to loading assets natively.
-          reject(new Error('error fetching asset: ' + e));
+          resolve({
+            obj,
+            data: {
+              key: obj.key,
+              hash: obj.hash,
+              expiry: obj.expiry,
+              blob: null
+            }
+          });
         });
       });
     })
@@ -213,7 +229,7 @@ class IndexedCache {
 
   // Get the blob of an asset stored in the DB. If there is no entry or it has expired
   // (hash changed or date expired), fetch the asset over HTTP, cache it, and load it.
-  async _getBlob (obj) {
+  async _getDBblob (obj) {
     return new Promise((resolve, reject) => {
       try {
         const req = this._store().get(obj.key);
@@ -246,14 +262,16 @@ class IndexedCache {
   }
 
   // Fetch an asset and cache it.
-  async _fetchAsset (obj) {
+  async _fetchObject (obj) {
     return new Promise((resolve, reject) => {
       fetch(obj.src).then((r) => {
+        // HTTP request failed.
         if (!r.ok) {
           reject(new Error(`error fetching asset: ${r.status}`));
           return
         }
 
+        // Write the fetched blob to the DB.
         r.blob().then((b) => {
           const data = {
             key: obj.key,
@@ -262,43 +280,33 @@ class IndexedCache {
             blob: b
           };
 
+          // onerror() may not always trigger like in the private mode in Safari.
           try {
             const req = this._store().put(data);
-            req.onsuccess = (e) => resolve(data);
+            req.onsuccess = () => resolve(data);
             req.onerror = (e) => reject(e.target.error);
           } catch (e) {
-            reject(e.target.error);
+            reject(e);
           }
         });
-      }).catch((e) => {
-        reject(new Error(e.toString()));
-      });
+      }).catch((e) => reject(e));
     })
   }
 
-  // Fallback (because there is no DB) to loading the assets via the native mechanism.
-  _applyOriginal (obj) {
-    switch (obj.el.tagName) {
-      case 'SCRIPT':
-      case 'IMG':
-        obj.el.setAttribute('src', obj.src);
-        break
-      case 'LINK':
-        obj.el.setAttribute('href', obj.src);
+  // Apply the Blob (if given), or the original obj.src URL to the given element.
+  _applyElement (obj, blob) {
+    let url = obj.src;
+    if (blob) {
+      url = window.URL.createObjectURL(blob);
     }
-    obj.el.dataset.indexed = true;
-  }
 
-  // Apply the Blob() to the given element.
-  _applyBlob (obj, blob) {
-    const b = window.URL.createObjectURL(blob);
     switch (obj.el.tagName) {
       case 'SCRIPT':
       case 'IMG':
-        obj.el.src = b;
+        obj.el.src = url;
         break
       case 'LINK':
-        obj.el.href = b;
+        obj.el.href = url;
     }
     obj.el.dataset.indexed = true;
   }
