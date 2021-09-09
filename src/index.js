@@ -98,6 +98,13 @@ export default class IndexedCache {
       req.onsuccess = () => resolve(req.result)
 
       req.onerror = (e) => reject(e.target.error)
+
+      // Hacky fix for IndexedDB randomly locking up in Safari.
+      setTimeout(() => {
+        if (!this.db) {
+          reject(new Error('Opening IndexedbDB timed out'))
+        }
+      }, 200)
     })
   }
 
