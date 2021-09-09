@@ -25,7 +25,7 @@ Use if at least a few of these are true:
 - CORS.
 - First-paint "flash" (needs to be handled manually) as scripts and styles only load after HTML is fetched and rendered by the browser.
 - Browser compatibility.
-- Empty space or line breaks between the opening and closing `<script data-src="remote.js"></script>` tags will be executed as an inline script by the browser, after which the browser will not load the remote script when applied. Ensure that the opening and closing script ags have nothing between then.
+- Empty space or line breaks between the opening and closing `<script data-src="remote.js"></script>` tags will be executed as an inline script by the browser, after which the browser will not load the remote script when applied. Ensure that the opening and closing script tags have nothing between then.
 
 ## Usage
 
