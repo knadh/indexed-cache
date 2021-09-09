@@ -1,4 +1,13 @@
+function allSettled (promises) {
+  const wrappedPromises = promises.map(p => Promise.resolve(p)
+    .then(
+      val => ({ status: 'fulfilled', value: val }),
+      err => ({ status: 'rejected', reason: err })));
+  return Promise.all(wrappedPromises)
+}
+
 let _icLoaded = false;
+
 class IndexedCache {
   constructor (options) {
     if (_icLoaded) {
@@ -178,7 +187,7 @@ class IndexedCache {
     // Once the assets have been fetched, apply them synchronously. Since
     // the time take to execute a script is not guaranteed, use the onload() event
     // of each element to load the next element.
-    await Promise.allSettled(promises).then((results) => {
+    await allSettled(promises).then((results) => {
       results.forEach((cur, n) => {
         if (cur.status === 'rejected') {
           this._applyElement(objs[n]);
