@@ -1,4 +1,6 @@
+import { allSettled } from './polyfills'
 let _icLoaded = false
+
 export default class IndexedCache {
   constructor (options) {
     if (_icLoaded) {
@@ -178,7 +180,7 @@ export default class IndexedCache {
     // Once the assets have been fetched, apply them synchronously. Since
     // the time take to execute a script is not guaranteed, use the onload() event
     // of each element to load the next element.
-    await Promise.allSettled(promises).then((results) => {
+    await allSettled(promises).then((results) => {
       results.forEach((cur, n) => {
         if (cur.status === 'rejected') {
           this._applyElement(objs[n])
