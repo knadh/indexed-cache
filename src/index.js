@@ -65,6 +65,10 @@ export default class IndexedCache {
   }
 
   deleteKey (key) {
+    if (!this.db) {
+      return
+    }
+
     this._store().delete(key)
   }
 
@@ -74,6 +78,10 @@ export default class IndexedCache {
   }
 
   clear () {
+    if (!this.db) {
+      return
+    }
+
     this._store().clear()
   }
 
@@ -322,6 +330,10 @@ export default class IndexedCache {
 
   // Delete all objects in cache that are not in the given list of objects.
   _prune (keys) {
+    if (!this.db) {
+      return
+    }
+
     // Prepare a { key: true } lookup map of all keys found on the page.
     const keyMap = keys.reduce((obj, v) => { obj[v] = true; return obj }, {})
 
