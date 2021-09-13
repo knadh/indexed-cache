@@ -1,6 +1,6 @@
 {
   "name": "@knadh/indexed-cache",
-  "version": "0.4.0",
+  "version": "0.4.2",
   "description": "Sideload static assets on pages and cache them in IndexedDB ensuring longer-term storage.",
   "main": "src/index.js",
   "files": [
@@ -32,7 +32,8 @@
     "access": "public"
   },
   "browser": "dist/indexed-cache.min.js",
-  "esm": "dist/indexed-cache.esm.js",
+  "browserLegacy": "dist/indexed-cache.legacy.min.js",
+  "esm": "dist/indexed-cache.esm.min.js",
   "devDependencies": {
     "@babel/core": "^7.14.6",
     "@babel/preset-env": "^7.14.7",

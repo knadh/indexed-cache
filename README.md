@@ -4,24 +4,28 @@
 
 indexed-cache is a tiny Javascript library that "sideloads" static assets (script, link, and img tags) on webpages using the fetch() API and caches them in an IndexedDB store to eliminate the dependency on the standard browser static asset cache, and to eliminate HTTP requests on subsequent page loads. Javascript, CSS, and image assets are stored in IndexedDB as Blob()s.
 
-### For very specific scenarios only!
+### For very specific scenarios only
+
 This library is only meant to be used in very specific scenarios.
 
 Unlike the browser's asset cache, IndexedDB is not cleared automatically, providing a longer term static file storage on the client side. The lib uses ES6 (and IndexedDB) and is only expected to work on recent versions of modern browsers. Ideally, this should have been handled with ServiceWorkers, but they don't work in mobile webviews.
 
 Use if at least a few of these are true:
+
 - There are large static files (JS, CSS) that rarely change.
 - High traffic from a large number of returning users who access web pages with the same assets regularly and frequently.
 - The pages are mostly inside mobile webviews where browser cache gets evicted  (OS pressure) causing the same assets to be fetched afresh over and over wasting bandwidth.
 - Bandwidth is a concern.
 
 ### Features
+
 - Supports script, img, link tags.
 - Respects `defer / async` on script tags.
 - Can invalidate cached items with a TTL per tag.
 - Can invalidate cached items with a simple random hash per tag.
 
 ### Gotchas
+
 - CORS.
 - First-paint "flash" (needs to be handled manually) as scripts and styles only load after HTML is fetched and rendered by the browser.
 - Browser compatibility.
@@ -30,6 +34,7 @@ Use if at least a few of these are true:
 ## Usage
 
 To cache and sideload static assets:
+
 - Change the original `src` (`href` for CSS) attribute on tags to `data-src`.
 - Give tags a unique ID with `data-key`. The cached items are stored in the database with this key. The actual filenames of the assets can change freely, like in the case of JS build systems.
 - Load and invoke indexed-cache at the end.
@@ -73,16 +78,56 @@ To cache and sideload static assets:
         Always include and invoke indexed-cache at the end, right before </body>.
         Use the unpkg CDN or download and host the script locally (dist/indexed-cache.min.js).
     !-->
-    <script src="https://unpkg.com/@knadh/indexed-cache@0.4.0/dist/indexed-cache.min.js"></script>
-    <script>const ic = new IndexedCache(); await ic.init(); ic.load();</script>
+    <script src="https://unpkg.com/@knadh/indexed-cache@0.4.2/dist/indexed-cache.min.js" nomodule></script>
+
+    <!-- Use this if you are supporting old browsers which doesn't support ES6. -->
+    <!-- <script src="https://unpkg.com/@knadh/indexed-cache@0.4.2/dist/indexed-cache.legacy.min.js" nomodule></script> -->
+
+    <script>
+        const ic = new IndexedCache();
+        ic.init().then(function() {
+            ic.load();
+        }).catch(function(err) {
+            console.log("error loading indexed-cache", err)
+        })
+    </script>
 </body>
 </html>
 ```
 
+#### Load modern and legacy bundle conditionally
+
+Here is an example on how to load modern(ESM) bundle and legacy bundle conditionally based on browser support.
+
+```html
+    <!-- Only modern browsers understand type=module and legacy browsers will skip this script -->
+    <script type="module">
+        // Use ESM bundle.
+        import IndexedCache from "https://unpkg.com/@knadh/indexed-cache@0.4.2/dist/indexed-cache.esm.min.js";
+        const ic = new IndexedCache();
+        ic.init().then(function() {
+            ic.load();
+        }).catch(function(err) {
+            console.log("error loading indexed-cache", err)
+        })
+    </script>
+
+    <!-- This will only be executed on legacy browsers which doesn't support ES6 modules.
+    Modern browsers ignore the script if its tagged `nomodule`. -->
+    <script src="https://unpkg.com/@knadh/indexed-cache@0.4.2/dist/indexed-cache.legacy.min.js" nomodule></script>
+    <script nomodule>
+        const ic = new IndexedCache();
+        ic.init().then(function() {
+            ic.load();
+        }).catch(function(err) {
+            console.log("error loading indexed-cache", err)
+        })
+    </script>
+```
 
 #### Optional configuration
 
-One or more of these optional params can be passed during initialization. Default values are shown below. 
+One or more of these optional params can be passed during initialization. Default values are shown below.
 
 ```javascript
 new IndexedCache({
