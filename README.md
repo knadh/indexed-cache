@@ -78,10 +78,10 @@ To cache and sideload static assets:
         Always include and invoke indexed-cache at the end, right before </body>.
         Use the unpkg CDN or download and host the script locally (dist/indexed-cache.min.js).
     !-->
-    <script src="https://unpkg.com/@knadh/indexed-cache@0.4.2/dist/indexed-cache.min.js" nomodule></script>
+    <script src="https://unpkg.com/@knadh/indexed-cache@0.4.3/dist/indexed-cache.min.js" nomodule></script>
 
     <!-- Use this if you are supporting old browsers which doesn't support ES6. -->
-    <!-- <script src="https://unpkg.com/@knadh/indexed-cache@0.4.2/dist/indexed-cache.legacy.min.js" nomodule></script> -->
+    <!-- <script src="https://unpkg.com/@knadh/indexed-cache@0.4.3/dist/indexed-cache.legacy.min.js" nomodule></script> -->
 
     <script>
         const ic = new IndexedCache();
@@ -103,7 +103,7 @@ Here is an example on how to load modern(ESM) bundle and legacy bundle condition
     <!-- Only modern browsers understand type=module and legacy browsers will skip this script -->
     <script type="module">
         // Use ESM bundle.
-        import IndexedCache from "https://unpkg.com/@knadh/indexed-cache@0.4.2/dist/indexed-cache.esm.min.js";
+        import IndexedCache from "https://unpkg.com/@knadh/indexed-cache@0.4.3/dist/indexed-cache.esm.min.js";
         const ic = new IndexedCache();
         ic.init().then(function() {
             ic.load();
@@ -114,7 +114,7 @@ Here is an example on how to load modern(ESM) bundle and legacy bundle condition
 
     <!-- This will only be executed on legacy browsers which doesn't support ES6 modules.
     Modern browsers ignore the script if its tagged `nomodule`. -->
-    <script src="https://unpkg.com/@knadh/indexed-cache@0.4.2/dist/indexed-cache.legacy.min.js" nomodule></script>
+    <script src="https://unpkg.com/@knadh/indexed-cache@0.4.3/dist/indexed-cache.legacy.min.js" nomodule></script>
     <script nomodule>
         const ic = new IndexedCache();
         ic.init().then(function() {
