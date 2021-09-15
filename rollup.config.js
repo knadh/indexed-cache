@@ -4,6 +4,8 @@ import commonjs from '@rollup/plugin-commonjs'
 import pkg from './package.json'
 import { terser } from 'rollup-plugin-terser'
 import eslint from '@rollup/plugin-eslint'
+import replace from '@rollup/plugin-replace'
+
 const production = !process.env.ROLLUP_WATCH
 const preamble = `/* indexed-cache - v${pkg.version}
 * ${pkg.author}. Licensed ${pkg.license} */`
@@ -55,6 +57,15 @@ export default [
     plugins: [
       eslint({
         throwOnError: true
+      }),
+      // Inject legacy only polyfills.
+      replace({
+        include: './src/index.js',
+        preventAssignment: true,
+        values: {
+          '// INJECT_LEGACY_POLYFILL_HERE': "import './indexeddb-getall-polyfill'"
+        },
+        delimiters: ['', '']
       }),
       resolve(),
       commonjs(),

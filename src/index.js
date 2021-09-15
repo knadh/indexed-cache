@@ -1,4 +1,6 @@
+// INJECT_LEGACY_POLYFILL_HERE
 import { allSettled } from './polyfills'
+
 let _icLoaded = false
 
 export default class IndexedCache {
