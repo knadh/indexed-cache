@@ -57,7 +57,9 @@ export default [
         throwOnError: true
       }),
       resolve(),
+      commonjs(),
       babel({
+        babelrc: false,
         exclude: 'node_modules/**',
         babelHelpers: 'bundled',
         presets: [
@@ -65,7 +67,7 @@ export default [
             '@babel/preset-env',
             {
               targets: {
-                browsers: '> 0.5%, not op_mini all, not dead'
+                browsers: '> 0.1%, not op_mini all, not dead'
               },
               modules: false,
               spec: true,
@@ -76,7 +78,6 @@ export default [
           ]
         ]
       }),
-      commonjs(),
       production && terser({
         output: { preamble }
       })

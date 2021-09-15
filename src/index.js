@@ -135,7 +135,7 @@ export default class IndexedCache {
 
     // Get all tags of a particular tag on the page that has the data-src attrib.
     // document.querySelectorAll(`${tag}[data-src]:not([data-indexed])`).forEach((el) => {
-    elements.forEach((el) => {
+    Array.prototype.forEach.call(elements, (el) => {
       if ('indexed' in el.dataset) {
         return
       }
