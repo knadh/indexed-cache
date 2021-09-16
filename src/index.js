@@ -46,10 +46,7 @@ export default class IndexedCache {
   async load (elements) {
     // This will setup the elements on the page irrespective of whether
     // the DB is available or not.
-    let objs = []
-    await this._setupElements(elements).then((_objs) => {
-      objs = _objs
-    })
+    const objs = await this._setupElements(elements)
 
     if (!this.db || objs.length === 0) {
       return
@@ -86,7 +83,7 @@ export default class IndexedCache {
   }
 
   // Initialize the indexedDB database and create the store.
-  async _initDB (dbName, storeName) {
+  _initDB (dbName, storeName) {
     return new Promise((resolve, reject) => {
       if (!window.indexedDB) {
         reject(new Error('indexedDB is not available'))
