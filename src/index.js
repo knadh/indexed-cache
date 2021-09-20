@@ -147,7 +147,8 @@ export default class IndexedCache {
         src: el.dataset.src,
         hash: el.dataset.hash || el.dataset.src,
         isAsync: el.tagName !== 'SCRIPT' || el.hasAttribute('async') || el.hasAttribute('defer'),
-        expiry: null
+        expiry: null,
+        data: {}
       }
 
       // If there is a global expiry or an expiry on the object, compute that.
@@ -156,14 +157,14 @@ export default class IndexedCache {
         obj.expiry = new Date(new Date().getTime() + (parseInt(exp) * 60000))
       }
 
-      // If for any reason the store is not initialized, fall back to
-      // the native asset loading mechanism.
-      if (this.db) {
-        objs.push(obj)
-      } else {
-        this._applyElement(obj)
-      }
+      objs.push(obj)
     })
+
+    // If there's no IndexedDB, load all scripts synchronously.
+    if (!this.db) {
+      this._applyElements(objs)
+      return
+    }
 
     const promises = []
     objs.forEach((obj) => {
@@ -184,27 +185,12 @@ export default class IndexedCache {
       return objs
     }
 
-    // Once the assets have been fetched, apply them synchronously. Since
-    // the time take to execute a script is not guaranteed, use the onload() event
-    // of each element to load the next element.
+    // Load all elements successively.
     await allSettled(promises).then((results) => {
-      results.forEach((cur, n) => {
-        if (cur.status === 'rejected') {
-          this._applyElement(objs[n])
-          return
-        }
-
-        if (n >= results.length - 1) {
-          return
-        }
-
-        cur.value.obj.el.onload = cur.value.obj.el.onerror = () => {
-          this._applyElement(results[n + 1].value.obj, results[n + 1].value.data.blob)
-        }
-      })
-
-      // Start the chain by loading the first element.
-      this._applyElement(results[0].value.obj, results[0].value.data.blob)
+      // Promise returns [{value: { obj, data }} ...].
+      // Transform to [{ ...obj, data: data} ...]
+      const out = results.reduce((arr, r) => { arr.push({ ...r.value.obj, data: r.value.data }); return arr }, [])
+      this._applyElements(out)
     })
 
     return objs
@@ -325,6 +311,24 @@ export default class IndexedCache {
         obj.el.href = url
     }
     obj.el.dataset.indexed = true
+  }
+
+  // Apply the Blob (if given), or the original obj.src URL to the given list of elements
+  // by chaining each successive element to the previous one's onload so that they load
+  // in order.
+  _applyElements (objs) {
+    objs.forEach((obj, n) => {
+      if (n >= objs.length - 1) {
+        return
+      }
+
+      obj.el.onload = obj.el.onerror = () => {
+        this._applyElement(objs[n + 1], objs[n + 1].data.blob)
+      }
+    })
+
+    // Start the chain by loading the first element.
+    this._applyElement(objs[0], objs[0].data.blob)
   }
 
   // Delete all objects in cache that are not in the given list of objects.

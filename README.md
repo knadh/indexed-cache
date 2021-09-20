@@ -30,6 +30,7 @@ Use if at least a few of these are true:
 - First-paint "flash" (needs to be handled manually) as scripts and styles only load after HTML is fetched and rendered by the browser.
 - Browser compatibility.
 - Empty space or line breaks between the opening and closing `<script data-src="remote.js"></script>` tags will be executed as an inline script by the browser, after which the browser will not load the remote script when applied. Ensure that the opening and closing script tags have nothing between then.
+- Scripts that rely on the `document.onload` event will need the event to be triggered for them manually once indexed-cache loads with a `document.dispatchEvent(new Event("load"));`
 
 ## Usage
 
@@ -114,11 +115,14 @@ Here is an example on how to load modern(ESM) bundle and legacy bundle condition
 
     <!-- This will only be executed on legacy browsers which doesn't support ES6 modules.
     Modern browsers ignore the script if its tagged `nomodule`. -->
-    <script src="https://unpkg.com/@knadh/indexed-cache@0.4.3/dist/indexed-cache.legacy.min.js" nomodule></script>
+    <script src="https://unpkg.com/@knadh/indexed-cache@0.4.4/dist/indexed-cache.legacy.min.js" nomodule></script>
     <script nomodule>
         const ic = new IndexedCache();
         ic.init().then(function() {
             ic.load();
+
+            // Optionally trigger `onload` if there are scripts that depend on it.
+            // document.dispatchEvent(new Event("load"))
         }).catch(function(err) {
             console.log("error loading indexed-cache", err)
         })
