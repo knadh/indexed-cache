@@ -15,12 +15,16 @@ export default class IndexedCache {
       dbName: 'indexed-cache',
       storeName: 'objects',
 
-      // If this is enabled, all objects in the cash with keys not
+      // If this is enabled, all objects in the cache with keys not
       // found on elements on the page (data-key) will be deleted by load().
       // This can be problematic in scenarios where there are multiple
       // pages on the same domain that have different assets, some on
       // certain pages and some on other.
       prune: false,
+
+      // Enabling this skips IndexedDB caching entirely, causing resources to be fetched over HTTP every time.
+      // Useful in dev environments.
+      skip: false,
 
       // Default expiry for an object in minutes (default 3 months).
       // Set to null for no expiry.
@@ -295,10 +299,10 @@ export default class IndexedCache {
     })
   }
 
-  // Apply the Blob (if given), or the original obj.src URL to the given element.
+  // Apply the Blob (if given and opt.skip is false), or the original obj.src URL to the given element.
   _applyElement (obj, blob) {
     let url = obj.src
-    if (blob) {
+    if (blob && !this.opt.skip) {
       url = window.URL.createObjectURL(blob)
     }
 
