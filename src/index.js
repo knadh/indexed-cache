@@ -15,12 +15,17 @@ export default class IndexedCache {
       dbName: 'indexed-cache',
       storeName: 'objects',
 
-      // If this is enabled, all objects in the cash with keys not
+      // If this is enabled, all objects in the cache with keys not
       // found on elements on the page (data-key) will be deleted by load().
       // This can be problematic in scenarios where there are multiple
       // pages on the same domain that have different assets, some on
       // certain pages and some on other.
       prune: false,
+
+      // Enabling this skips IndexedDB caching entirely,
+      // causing resources to be fetched over HTTP every time.
+      // Useful in dev environments.
+      skip: false,
 
       // Default expiry for an object in minutes (default 3 months).
       // Set to null for no expiry.
@@ -36,7 +41,9 @@ export default class IndexedCache {
     if (this.db) {
       return
     }
-
+    if (this.opt.skip) {
+      return
+    }
     await this._initDB(this.opt.dbName, this.opt.storeName).then((db) => {
       this.db = db
     }).catch((e) => {

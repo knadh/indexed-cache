@@ -146,6 +146,11 @@ new IndexedCache({
     // certain pages and some on other.
     prune: false,
 
+    // Enabling this skips IndexedDB caching entirely,
+    // causing resources to be fetched over HTTP every time.
+    // Useful in dev environments.
+    skip: false,
+
     // Default expiry for an object in minutes (default 3 months).
     // Set to null for no expiry.
     expiry: 131400
