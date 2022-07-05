@@ -146,7 +146,8 @@ new IndexedCache({
     // certain pages and some on other.
     prune: false,
 
-    // Enabling this skips IndexedDB caching entirely, causing resources to be fetched over HTTP every time.
+    // Enabling this skips IndexedDB caching entirely,
+    // causing resources to be fetched over HTTP every time.
     // Useful in dev environments.
     skip: false,
 
