@@ -22,7 +22,8 @@ export default class IndexedCache {
       // certain pages and some on other.
       prune: false,
 
-      // Enabling this skips IndexedDB caching entirely, causing resources to be fetched over HTTP every time.
+      // Enabling this skips IndexedDB caching entirely,
+      // causing resources to be fetched over HTTP every time.
       // Useful in dev environments.
       skip: false,
 
@@ -40,7 +41,9 @@ export default class IndexedCache {
     if (this.db) {
       return
     }
-
+    if (this.opt.skip) {
+      return
+    }
     await this._initDB(this.opt.dbName, this.opt.storeName).then((db) => {
       this.db = db
     }).catch((e) => {
@@ -299,10 +302,10 @@ export default class IndexedCache {
     })
   }
 
-  // Apply the Blob (if given and opt.skip is false), or the original obj.src URL to the given element.
+  // Apply the Blob (if given), or the original obj.src URL to the given element.
   _applyElement (obj, blob) {
     let url = obj.src
-    if (blob && !this.opt.skip) {
+    if (blob) {
       url = window.URL.createObjectURL(blob)
     }
 
